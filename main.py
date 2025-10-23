@@ -1,5 +1,7 @@
 import asyncio
 import logging
+import maxapi
+from maxapi.filters import F
 from maxapi import Bot, Dispatcher
 from maxapi.types import BotStarted, Command, MessageCreated
 
@@ -25,11 +27,19 @@ async def ask_status(event: MessageCreated):
     await event.message.answer(
         "Выберите один из вариантов: Молодой учёный, Студент, Аспирант"
     )
-
+    
 @dp.message_created()
-async def a(event: MessageCreated):
-    if MessageCreated == "Студент":
-       await event.message.answer("ты студент")
+async def handle_message(event: MessageCreated):
+    text = event.message.body.text.strip().lower()
+    if text == "студент":
+        await event.message.answer("Ваш статус - Студент")
+    elif text == "аспирант":
+        await event.message.answer("Ваш статус - Аспирант")
+    elif text == "молодой учёный":
+        await event.message.answer("Ваш статус - Молодой Учёный")
+    else:
+        await event.message.answer("Пожалуйста, введите один из возможных статусов")
+
 
 async def main():
     await dp.start_polling(bot)
