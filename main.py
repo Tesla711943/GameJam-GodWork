@@ -22,23 +22,42 @@ async def bot_started(event: BotStarted):
 async def hello(event: MessageCreated):
     await event.message.answer("Привет! Напиши /status или /direction")
 
+user_state = {}
+# {userid:[1, 2]}
+chosen_strategy = {}
+
+
 @dp.message_created(Command('status'))
 async def ask_status(event: MessageCreated):
+    user_id = event.from_user.user_id
     await event.message.answer(
         "Выберите один из вариантов: Молодой учёный, Студент, Аспирант"
     )
+    user_state[user_id] = "status_awaiting"
+
     
 @dp.message_created()
 async def handle_message(event: MessageCreated):
-    text = event.message.body.text.strip().lower()
-    if text == "студент":
-        await event.message.answer("Ваш статус - Студент")
-    elif text == "аспирант":
-        await event.message.answer("Ваш статус - Аспирант")
-    elif text == "молодой учёный":
-        await event.message.answer("Ваш статус - Молодой Учёный")
+
+    user_id = event.from_user.user_id
+    if user_state[user_id] == "status_awaiting":
+        text = event.message.body.text.strip().lower()
+        if text == "студент":
+            user_state[user_id] = ""
+            await event.message.answer("Ваш статус - Студент")
+            chosen_strategy[user_id] = ["Студент", ""]
+        elif text == "аспирант":
+            user_state[user_id] = ""
+            await event.message.answer("Ваш статус - Аспирант")
+            chosen_strategy[user_id] = ["Аспирант", ""]
+        elif text == "молодой учёный":
+            user_state[user_id] = ""
+            await event.message.answer("Ваш статус - Молодой Учёный")
+            chosen_strategy[user_id] = ["Молодой Учёный", ""]
+        else:
+            await event.message.answer("Пожалуйста, введите один из возможных статусов")
     else:
-        await event.message.answer("Пожалуйста, введите один из возможных статусов")
+        await event.message.answer("Введите /status для установки статуса")
 
 
 async def main():
