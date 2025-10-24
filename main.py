@@ -14,6 +14,7 @@ cursor = conn.cursor()
 bot = Bot('f9LHodD0cOJS9bR1dR0a5Aq94uoVZ3Rsf6BcY73b6U_Mtx4hK1vhnp34Fv7kM9dU8KQSqzHsGUuyRV3tQekD')
 dp = Dispatcher()
 
+
 user_state = {}
 chosen_strategy = {}  # {user_id: [status, direction]}
 
@@ -23,7 +24,8 @@ async def show_main_menu(event):
     buttons = [
         [CallbackButton(text="Указать статус", payload="status")],
         [CallbackButton(text="Указать направление", payload="direction")],
-        [CallbackButton(text="Посмотреть информацию", payload="info")]
+        [CallbackButton(text="Посмотреть информацию", payload="info")],
+        [CallbackButton(text="Посмотреть свою материальную помощь", payload="support")]
     ]
     payload = ButtonsPayload(buttons=buttons).pack()
     await event.message.answer(
@@ -36,7 +38,10 @@ async def show_main_menu(event):
 async def show_status_buttons(event):
     buttons = [
         [CallbackButton(text="Молодой учёный", payload="status_молодой учёный")],
-        [CallbackButton(text="Студент", payload="status_студент")],
+        [CallbackButton(text="Конструктор", payload="status_конструктор")],
+        [CallbackButton(text="Бакалавр", payload="status_бакалавр")],
+        [CallbackButton(text="Специалитет", payload="status_специалитет")],
+        [CallbackButton(text="Магистр", payload="status_магистр")],
         [CallbackButton(text="Аспирант", payload="status_аспирант")]
     ]
     payload = ButtonsPayload(buttons=buttons).pack()
@@ -84,10 +89,25 @@ async def on_callback(event: MessageCallback):
     if data == "hello":
         user_state[user_id] = "main_menu"
         await show_main_menu(event)
+    elif data == "support":
+        if user_id in chosen_strategy and all(chosen_strategy[user_id]):
+            status, direction = chosen_strategy[user_id]
 
+            cursor.execute(
+            "SELECT * FROM support_measures WHERE category LIKE ? OR dirr LIKE ?",
+            (f"%{status}%", f"%{direction}%")
+)
+
+            result = cursor.fetchall()
+            if result:
+                measures = "\n".join([f"{row[0]} - {row[4]}\n\n {row[11]}\n" for row in result])
+                await event.message.answer(f"Найдены меры поддержки:\n\n    {measures}")
+            else:
+                await event.message.answer("Меры поддержки не найдены.")
+        else:
+            await event.message.answer("Сначала выберите статус и направление!")
     elif data == "status":
         await show_status_buttons(event)
-
     elif data.startswith("status_"):
         chosen_strategy[user_id][0] = data.split("_")[1]
         user_state[user_id] = "main_menu"
@@ -114,6 +134,10 @@ async def on_callback(event: MessageCallback):
 
     else:
         await show_main_menu(event)
+
+
+
+
 
 
 # === Запуск ===
